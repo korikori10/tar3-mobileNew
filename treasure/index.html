@@ -82,27 +82,92 @@
         //-----------------------------------------------------------
         // this is called on the pageshow event of the map-page page
         //-----------------------------------------------------------
+            Stimer = 0;
+            sTimeInterval = 1000;
         $(document).on('pageshow', '#map-page', function (e, data) {
             image = "images/man_small.png";
-            timer = 0;
+            timer = 300;
             timeInterval = 5000; // [in miliseconds]between the calls to the new position calculations            //minDistance = 5; 
             minDistance = 10; // distance from the treasure in which it is found
+            cFlag = false;
+            infowindow = null;
 
             var mapOptions = { // set the map options
-                zoom: 18
+                zoom: 17    
             }
-            mapObj = document.getElementById('map-canvas'); // get the map-canvas div
-            map = new google.maps.Map(mapObj, mapOptions); // create the map object
+
+            map = new google.maps.Map( document.getElementById('map-canvas'), mapOptions); // create the map object
 
             if (navFlag == "on") {
                 getMyPosition(); // activate it for the first time
+              
                 h = setInterval("getMyPosition()", timeInterval); // run the getPosition every timeInterval 
+                
+                
             }
             else {
                 changePage("startDialog"); // handle the case that we got here via back
             }
+           
         });
 
+        //----------------------------------------------------------------------
+        // seconds timer function and check
+        //-----------------------------------------------------------------------
+
+        function challengeTimer() {
+           
+            if (Stimer >= 0) {
+
+                document.getElementById("challenge").innerHTML = Stimer + "s";
+                Stimer -= sTimeInterval /1000;
+            }
+            else {
+                cFlag = false;
+                clearInterval(ht);
+                
+               
+                // icon sad smiley
+               
+            }
+        }
+        //-----------------------------------------------------------------------
+        //getChalenge-------------------------------------------------------------
+        function getChallenge_success(result) {
+            if (infowindow) {
+                infowindow.close();
+            }
+            var data = $.parseJSON(result.d)
+             lat = data.Latitude;
+             lng = data.Longtitude;
+            var desc = data.Description;
+            var imgPath = data.ImagePath;
+            timeInMiliSec = data.TimeInSec;
+            Stimer = timeInMiliSec;
+            cFlag = true;
+            ht = setInterval("challengeTimer()", sTimeInterval);
+           
+
+            // create a marker
+            var pos = new google.maps.LatLng(lat, lng);
+            chal_marker = new google.maps.Marker({
+                position: pos,
+                map: map,
+                title: 'Challenge Point',
+                icon: "images/blue-dot.png"
+            });
+            var contentString = '<div><h4>' + desc + '</h4><div><img class="infoImg" src = "' + imgPath + '"/></div></div>';
+            infowindow = new google.maps.InfoWindow({
+                content: contentString
+            });
+            infowindow.open(map, chal_marker);
+        }
+
+        function getChallenge_failure(e) {
+            alert("failed in get challenge :( " + e.responseText);
+
+        }
+        ////////////////////////////////////////////////////////////////////////
         //-----------------------------------------------------------------------
         // get the user's position
         //-----------------------------------------------------------------------
@@ -113,10 +178,12 @@
                 timeout: timeInterval,
                 maximumAge: 1000
             };
-            navigator.geolocation.getCurrentPosition(getCurrentPosition_Success,
-                                                     getCurrentPosition_Failure,
-                                                     options);
-            timer += timeInterval / 1000; // increment the timer
+            navigator.geolocation.getCurrentPosition(getCurrentPosition_Success, getCurrentPosition_Failure, options);
+          
+            timer -= timeInterval / 1000; // increment the timer
+            document.getElementById("end").innerHTML = timer + "s";
+
+
         }
 
         //------------------------------------------------------------
@@ -125,7 +192,7 @@
         function getCurrentPosition_Success(position) {
             if (navFlag == "off") return;
             co = position.coords; // set a short variable for conviniece
-            var pos = new google.maps.LatLng(co.latitude, co.longitude);
+            pos = new google.maps.LatLng(co.latitude, co.longitude);
             $('#gpsIcon').attr('src', 'images/gps.png'); // show the gps working icon
             var marker1 = new google.maps.Marker({ // set a marker on the map
                 position: pos,
@@ -140,8 +207,16 @@
                 lng: co.longitude,
                 groupName: groupName
             };
+
+           
+
             // Ajax function : calculate the distance of the user's from the target
             // pass the callback functions as parameters to the ajax
+            if (cFlag == false) {
+
+                getChallenge(request, getChallenge_success, getChallenge_failure);
+                
+            }
             getDistance(request, getDistance_Success, getDistance_Failure);
         }
 
@@ -160,7 +235,6 @@
             var distance = $.parseJSON(data.d) * 1000; //X 1000 is because the value received is in KM
             distance = Math.floor(distance);           // round the distance
             // display it to the user
-            document.getElementById("distance").innerHTML = distance + "m ; a:" + co.accuracy + " ; " + timer + "s";
 
             if (reachedTarget(distance)) {// check if target is reached
                 clearInterval(h);
@@ -231,8 +305,11 @@
             <h1>
                 Treasure Game - Ruppin
             </h1>
-            <h1 id="distance" data-theme="b">
-                Distance:
+            <h1 id="end" data-theme="b">
+                End:
+            </h1>
+            <h1 id="challenge" data-theme="b">
+                Challenge:
             </h1>
         </div>
 
