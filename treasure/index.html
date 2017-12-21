@@ -88,10 +88,11 @@
             image = "images/man_small.png";
             timer = 300;
             timeInterval = 5000; // [in miliseconds]between the calls to the new position calculations            //minDistance = 5; 
-            minDistance = 10; // distance from the treasure in which it is found
+            minDistance = 5; // distance from the treasure in which it is found
             cFlag = false;
             infowindow = null;
-
+            lat = null;
+            lng = null;
             var mapOptions = { // set the map options
                 zoom: 17    
             }
@@ -119,10 +120,22 @@
            
             if (Stimer >= 0) {
 
-                document.getElementById("challenge").innerHTML = Stimer + "s";
+                document.getElementById("challenge").innerHTML ="Challenge: " + Stimer + "s";
                 Stimer -= sTimeInterval /1000;
             }
             else {
+               // chal_marker = new google.maps.Marker({
+               //     position: pos,
+               //     map: map,
+               //     title: 'Challenge Point',
+               //icon: "images/fail.jpg"
+               
+               // });
+               // chal_marker.icon ="images/frown.png" 
+             
+                var icon = 'images/frown.png';
+
+                chal_marker.setIcon(icon);
                 cFlag = false;
                 clearInterval(ht);
                 
@@ -172,7 +185,9 @@
         // get the user's position
         //-----------------------------------------------------------------------
         function getMyPosition() {
+            if (timer > 0 ) {
 
+            
             var options = {
                 enableHighAccuracy: true,
                 timeout: timeInterval,
@@ -181,8 +196,11 @@
             navigator.geolocation.getCurrentPosition(getCurrentPosition_Success, getCurrentPosition_Failure, options);
           
             timer -= timeInterval / 1000; // increment the timer
-            document.getElementById("end").innerHTML = timer + "s";
-
+            document.getElementById("end").innerHTML ="End: " + timer + "s";
+            }
+            else {
+                changePage("startDialog");
+            }
 
         }
 
@@ -192,7 +210,10 @@
         function getCurrentPosition_Success(position) {
             if (navFlag == "off") return;
             co = position.coords; // set a short variable for conviniece
+            var clat = (lat + co.latitude)/2;
+            var clng = (lng + co.longitude)/2;
             pos = new google.maps.LatLng(co.latitude, co.longitude);
+            cpos = new google.maps.LatLng(clat,clng)
             $('#gpsIcon').attr('src', 'images/gps.png'); // show the gps working icon
             var marker1 = new google.maps.Marker({ // set a marker on the map
                 position: pos,
@@ -200,7 +221,7 @@
                 title: 'You Are Here',
                 icon: image
             });
-            map.setCenter(pos); // center the map around the position of the user
+            map.setCenter(cpos); // center the map around the position of the user
 
             var request = {
                 lat: co.latitude,
@@ -217,7 +238,17 @@
                 getChallenge(request, getChallenge_success, getChallenge_failure);
                 
             }
+            
+            if (lat != null && lng != null) {
+            var request = {
+                lat: co.latitude,
+                lng: co.longitude,
+                groupName: groupName
+            };
+
             getDistance(request, getDistance_Success, getDistance_Failure);
+
+            }
         }
 
         //------------------------------------------------------------
@@ -237,9 +268,22 @@
             // display it to the user
 
             if (reachedTarget(distance)) {// check if target is reached
-                clearInterval(h);
-                changePage("riddle");
-                navFlag = "off";
+                //    chal_marker = new google.maps.Marker({
+                //        position: pos,
+                //        map: map,
+                //        title: 'Challenge Point',
+                //        icon: "images/success.jpg"
+
+                //    });
+                var icon = 'images/smiley.png';
+
+                chal_marker.setIcon(icon);
+               
+                
+                // infowindow.open(map, chal_marker);
+                cFlag = false;
+                clearInterval(ht);
+            
             }
         }
 
