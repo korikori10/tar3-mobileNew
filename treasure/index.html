@@ -50,7 +50,7 @@
                     event.preventDefault(); // prevent the link from moving to the next page
                 }
                 else {
-                    navFlag = "on"; // 
+                    navFlag = "on"; //
                 }
             });
         });
@@ -78,7 +78,7 @@
                 clearInterval(ht)
                 navFlag = "off";  // set the navigaion flag to off
                 changePage("startDialog");// redirect the user to the landing page
-                
+
 
             });
         });
@@ -91,29 +91,29 @@
         $(document).on('pageshow', '#map-page', function (e, data) {
             image = "images/man_small.png";
             timer = 300;
-            timeInterval = 5000; // [in miliseconds]between the calls to the new position calculations            //minDistance = 5; 
+            timeInterval = 5000; // [in miliseconds]between the calls to the new position calculations            //minDistance = 5;
             minDistance = 5; // distance from the treasure in which it is found
             cFlag = false;
             infowindow = null;
             lat = null;
             lng = null;
             var mapOptions = { // set the map options
-                zoom: 17    
+                zoom: 17
             }
 
             map = new google.maps.Map( document.getElementById('map-canvas'), mapOptions); // create the map object
 
             if (navFlag == "on") {
                 getMyPosition(); // activate it for the first time
-              
-                h = setInterval("getMyPosition()", timeInterval); // run the getPosition every timeInterval 
-                
-                
+
+                h = setInterval("getMyPosition()", timeInterval); // run the getPosition every timeInterval
+
+
             }
             else {
-                changePage("startDialog"); // handle the case that we got here via back
+                changePage("desktop"); // handle the case that we got here via back
             }
-           
+
         });
 
         //----------------------------------------------------------------------
@@ -121,31 +121,24 @@
         //-----------------------------------------------------------------------
 
         function challengeTimer() {
-           
+
             if (Stimer >= 0) {
 
                 document.getElementById("challenge").innerHTML ="Challenge: " + Stimer + "s";
                 Stimer -= sTimeInterval /1000;
             }
             else {
-               // chal_marker = new google.maps.Marker({
-               //     position: pos,
-               //     map: map,
-               //     title: 'Challenge Point',
-               //icon: "images/fail.jpg"
-               
-               // });
-               // chal_marker.icon ="images/frown.png" 
-             
+
+
                 var icon = 'images/frown.png';
 
                 chal_marker.setIcon(icon);
                 cFlag = false;
                 clearInterval(ht);
-                
-               
+
+
                 // icon sad smiley
-               
+
             }
         }
         //-----------------------------------------------------------------------
@@ -163,7 +156,7 @@
             Stimer = timeInMiliSec;
             cFlag = true;
             ht = setInterval("challengeTimer()", sTimeInterval);
-           
+
 
             // create a marker
             var pos = new google.maps.LatLng(lat, lng);
@@ -174,6 +167,7 @@
                 icon: "images/blue-dot.png"
             });
             var contentString = '<div><h4>' + desc + '</h4><div><img class="infoImg" src = "' + imgPath + '"/></div></div>';
+
             infowindow = new google.maps.InfoWindow({
                 content: contentString
             });
@@ -191,14 +185,14 @@
         function getMyPosition() {
             if (timer > 0 ) {
 
-            
+
             var options = {
                 enableHighAccuracy: true,
                 timeout: timeInterval,
                 maximumAge: 1000
             };
             navigator.geolocation.getCurrentPosition(getCurrentPosition_Success, getCurrentPosition_Failure, options);
-          
+
             timer -= timeInterval / 1000; // increment the timer
             document.getElementById("end").innerHTML ="End: " + timer + "s";
             }
@@ -230,19 +224,23 @@
             var request = {
                 lat: co.latitude,
                 lng: co.longitude,
-                groupName: groupName
+                groupName: groupName,
+                name: document.getElementById("nameTB").value,
+                description: document.getElementById("descriptionTB").value
             };
 
-           
+            setPOI(request, setPOI_Success, setPOI_Failure);
+
 
             // Ajax function : calculate the distance of the user's from the target
             // pass the callback functions as parameters to the ajax
             if (cFlag == false) {
 
                 getChallenge(request, getChallenge_success, getChallenge_failure);
-                
+                setPOI(request, setPOI_Success, setPOI_Failure);
+
             }
-            
+
             if (lat != null && lng != null) {
             var request = {
                 lat: co.latitude,
@@ -282,12 +280,12 @@
                 var icon = 'images/smiley.png';
 
                 chal_marker.setIcon(icon);
-               
-                
+
+
                 // infowindow.open(map, chal_marker);
                 cFlag = false;
                 clearInterval(ht);
-            
+
             }
         }
 
@@ -297,7 +295,7 @@
         function getDistance_Failure(e) {
             //alert("failed in getDistance :( " + e.responseText);
             alert("failed in getDistance :( " + e.error);
-        } 
+        }
 
         //------------------------------------------------------------
         // Check if we reached the destination
@@ -320,6 +318,136 @@
                 reloadPage: true,
             });
         }
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        function setPOI_Success(data) {
+            // create a marker
+            var marker = new google.maps.Marker({
+                position: clickLatlng,
+                map: map,
+                title: 'Path Point'
+            });
+        }
+
+        //-----------------------------------------------------------------------
+        // setPOI failure
+        //-----------------------------------------------------------------------
+        function setPOI_Failure(e) {
+            alert("failed in setPOI :( " + e.responseText);
+        }
+        /////////////////////////////////////////////////////////////////////////////////////////////
+
+        //-----------------------------------------------------------------------
+        // get the point of interst (POI)  list
+        //-----------------------------------------------------------------------
+        function getPOI() {
+            groupName = document.getElementById("groupNameTB").value;
+            if (groupName == "") {
+                alert("must enter a group name");
+                return;
+            }
+            var request = {
+                groupName: groupName
+            }
+            getPOIList(request, getPOIList_Success, getPOIList_Failure);
+        }
+
+        //-----------------------------------------------------------------------
+        // getPOIList Success
+        //-----------------------------------------------------------------------
+        function getPOIList_Success(data) {
+
+            poiList = $.parseJSON(data.d);
+            if (poiList.length == 0) {
+                alert("there are no POI under this group name");
+                return;
+            }
+
+            // set the center of the map on the first point
+            var myLatlng = new google.maps.LatLng(poiList[0].P.Lat, poiList[0].P.Lng);
+            map.setCenter(myLatlng);
+            // run on all the POIs and display them
+            for (i = 0; i < poiList.length; i++) {
+                showPOI(poiList[i]);
+            }
+
+        }
+
+        //-----------------------------------------------------------------------
+        // getPOIList Failure
+        //-----------------------------------------------------------------------
+        function getPOIList_Failure(e) {
+            alert("failed in getPOIList :( " + e.responseText);
+        }
+
+
+        //--------------------------------------
+        // show the POI on the map
+        //--------------------------------------
+        function showPOI(poiPoint) {
+            var poiLatlng = new google.maps.LatLng(poiPoint.P.Lat, poiPoint.P.Lng);
+            image = "images/blue-dot.png";
+            var marker = new google.maps.Marker({
+                position: poiLatlng,
+                map: map,
+                title: poiPoint.Name,
+                icon: image
+            });
+        }
+        //////////////////////////////////////////////////////////////////
+        function getPath() {
+            groupName = document.getElementById("groupNameTB").value;
+            if (groupName == "") {
+                alert("Please enter a group name");
+                return;
+            }
+            request = {
+                groupName: groupName
+            }
+            // an ajax call that gets the list of the path points
+            getPathList(request, getPathList_Success, getPathList_Failure);
+        }
+
+        //-----------------------------------------------------------------------
+        // called on getPathList success
+        //-----------------------------------------------------------------------
+        function getPathList_Success(data) {
+            var pathList = $.parseJSON(data.d);
+            // center the map on the first point of the path
+            var myLatlng = new google.maps.LatLng(pathList[0].Lat, pathList[0].Lng);
+            map.setCenter(myLatlng);
+            drawPath(pathList);
+        }
+
+        //-----------------------------------------------------------------------
+        // called on getPathList failure
+        //-----------------------------------------------------------------------
+        function getPathList_Failure(data) {
+            alert("failed in getPathList :( " + e.responseText);
+        }
+
+        //--------------------------------------------------------------------------------
+        // draw the path from the path list
+        //--------------------------------------------------------------------------------
+        function drawPath(pathList) {
+
+            polyLineArr = new Array(); // create a new array
+            // load all the path points to the array
+            for (i = 0; i < pathList.length; i++) {
+                polyLineArr[i] = new google.maps.LatLng(pathList[i].Lat, pathList[i].Lng);
+            }
+            // create a new Polyline object
+            var walkPath = new google.maps.Polyline({
+                path: polyLineArr, // the name of the array
+                geodesic: true,
+                strokeColor: '#FF0000',
+                strokeOpacity: 1.0,
+                strokeWeight: 2
+            });
+
+            walkPath.setMap(map); // show the walk path on the map
+
+        }
+
 
     </script>
 
@@ -372,20 +500,43 @@
 
         </div>
 
-    <div data-role="page" id="riddle">
+    <div data-role="page" id="desktop">
         <div data-role="header" data-theme="b" data-position="fixed">
-            <h1>
-                Mazal Tov
-            </h1>
-        </div>
+            <table>
+                <tr>
+                    <td>
+                        groupName :
+                    </td>
+                    <td>
+                        <input type="text" id="groupNameTB" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        POI Name :
+                    </td>
+                    <td>
+                        <input type="text" id="nameTB" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Description :
+                    </td>
+                    <td>
+                        <input type="text" id="descriptionTB" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                <input type="button" onclick="getPath()" value="Show Path List" />
+                    </td>
+                 </tr>
 
-        <div data-role="content" id="content3" style="text-align:center">
-            <h1 style="direction:rtl">עם מי מתחתן איתישיוק?</h1>
-            <a href="http://www.youtube.com/embed/6mM6JgLY6RM" data-role="button">
-                <h2>press to listen</h2>
-                <img src="images/george.jpg" style="width:100%" id="startBTN" />
-            </a>
-        </div>
+                </table>
+</div>
+
+
     </div>
 
 </body>
