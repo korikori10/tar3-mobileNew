@@ -74,8 +74,12 @@
             // handle the stop click
             $("#stopBTN").click(function () {
                 clearInterval(h); // stop running getMyPosition
+                cFlag = false;
+                clearInterval(ht)
                 navFlag = "off";  // set the navigaion flag to off
                 changePage("startDialog");// redirect the user to the landing page
+                
+
             });
         });
 
