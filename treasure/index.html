@@ -111,7 +111,7 @@
 
             }
             else {
-                changePage("desktop"); // handle the case that we got here via back
+                changePage("startDialog"); // handle the case that we got here via back
             }
 
         });
@@ -128,16 +128,22 @@
                 Stimer -= sTimeInterval /1000;
             }
             else {
-
-
                 var icon = 'images/frown.png';
 
                 chal_marker.setIcon(icon);
                 cFlag = false;
+                var request = {
+                    description: desc,
+                    lat: co.latitude,
+                    lng: co.longitude,
+                    groupName: groupName,
+                    name: desc,
+                    imageUrl:icon
+                };
+                setPOI(request, setPOI_Success, setPOI_Failure);
+
                 clearInterval(ht);
 
-
-                // icon sad smiley
 
             }
         }
@@ -150,7 +156,7 @@
             var data = $.parseJSON(result.d)
              lat = data.Latitude;
              lng = data.Longtitude;
-            var desc = data.Description;
+             desc = data.Description;
             var imgPath = data.ImagePath;
             timeInMiliSec = data.TimeInSec;
             Stimer = timeInMiliSec;
@@ -197,7 +203,7 @@
             document.getElementById("end").innerHTML ="End: " + timer + "s";
             }
             else {
-                changePage("startDialog");
+                changePage("desktop");
             }
 
         }
@@ -222,14 +228,14 @@
             map.setCenter(cpos); // center the map around the position of the user
 
             var request = {
+               
                 lat: co.latitude,
                 lng: co.longitude,
-                groupName: groupName,
-                name: document.getElementById("nameTB").value,
-                description: document.getElementById("descriptionTB").value
+                groupName: groupName
+        
             };
 
-            setPOI(request, setPOI_Success, setPOI_Failure);
+           // setPOI(request, setPOI_Success, setPOI_Failure);
 
 
             // Ajax function : calculate the distance of the user's from the target
@@ -237,7 +243,6 @@
             if (cFlag == false) {
 
                 getChallenge(request, getChallenge_success, getChallenge_failure);
-                setPOI(request, setPOI_Success, setPOI_Failure);
 
             }
 
@@ -270,19 +275,20 @@
             // display it to the user
 
             if (reachedTarget(distance)) {// check if target is reached
-                //    chal_marker = new google.maps.Marker({
-                //        position: pos,
-                //        map: map,
-                //        title: 'Challenge Point',
-                //        icon: "images/success.jpg"
-
-                //    });
+        
                 var icon = 'images/smiley.png';
 
                 chal_marker.setIcon(icon);
+                var request = {
+                    description: desc,
+                    lat: co.latitude,
+                    lng: co.longitude,
+                    groupName: groupName,
+                    name: desc,
+                    imageUrl: icon
+                };
+                setPOI(request, setPOI_Success, setPOI_Failure);
 
-
-                // infowindow.open(map, chal_marker);
                 cFlag = false;
                 clearInterval(ht);
 
@@ -318,6 +324,7 @@
                 reloadPage: true,
             });
         }
+       
         /////////////////////////////////////////////////////////////////////////////////////////////
         function setPOI_Success(data) {
             // create a marker
@@ -336,65 +343,17 @@
         }
         /////////////////////////////////////////////////////////////////////////////////////////////
 
-        //-----------------------------------------------------------------------
-        // get the point of interst (POI)  list
-        //-----------------------------------------------------------------------
-        function getPOI() {
-            groupName = document.getElementById("groupNameTB").value;
-            if (groupName == "") {
-                alert("must enter a group name");
-                return;
-            }
-            var request = {
-                groupName: groupName
-            }
-            getPOIList(request, getPOIList_Success, getPOIList_Failure);
-        }
-
-        //-----------------------------------------------------------------------
-        // getPOIList Success
-        //-----------------------------------------------------------------------
-        function getPOIList_Success(data) {
-
-            poiList = $.parseJSON(data.d);
-            if (poiList.length == 0) {
-                alert("there are no POI under this group name");
-                return;
-            }
-
-            // set the center of the map on the first point
-            var myLatlng = new google.maps.LatLng(poiList[0].P.Lat, poiList[0].P.Lng);
-            map.setCenter(myLatlng);
-            // run on all the POIs and display them
-            for (i = 0; i < poiList.length; i++) {
-                showPOI(poiList[i]);
-            }
-
-        }
-
-        //-----------------------------------------------------------------------
-        // getPOIList Failure
-        //-----------------------------------------------------------------------
-        function getPOIList_Failure(e) {
-            alert("failed in getPOIList :( " + e.responseText);
-        }
+      
 
 
-        //--------------------------------------
-        // show the POI on the map
-        //--------------------------------------
-        function showPOI(poiPoint) {
-            var poiLatlng = new google.maps.LatLng(poiPoint.P.Lat, poiPoint.P.Lng);
-            image = "images/blue-dot.png";
-            var marker = new google.maps.Marker({
-                position: poiLatlng,
-                map: map,
-                title: poiPoint.Name,
-                icon: image
-            });
-        }
         //////////////////////////////////////////////////////////////////
-        function getPath() {
+        $(document).on('pageshow', '#desktop', function (e, data) {
+            var mapOptions = {
+                zoom: 17,
+                mapTypeId: google.maps.MapTypeId.SATELLITE
+            }
+            map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+
             groupName = document.getElementById("groupNameTB").value;
             if (groupName == "") {
                 alert("Please enter a group name");
@@ -403,10 +362,13 @@
             request = {
                 groupName: groupName
             }
-            // an ajax call that gets the list of the path points
-            getPathList(request, getPathList_Success, getPathList_Failure);
-        }
 
+            getPathList(request, getPathList_Success, getPathList_Failure);
+
+
+        });
+
+       
         //-----------------------------------------------------------------------
         // called on getPathList success
         //-----------------------------------------------------------------------
@@ -447,7 +409,6 @@
             walkPath.setMap(map); // show the walk path on the map
 
         }
-
 
     </script>
 
@@ -502,38 +463,7 @@
 
     <div data-role="page" id="desktop">
         <div data-role="header" data-theme="b" data-position="fixed">
-            <table>
-                <tr>
-                    <td>
-                        groupName :
-                    </td>
-                    <td>
-                        <input type="text" id="groupNameTB" />
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        POI Name :
-                    </td>
-                    <td>
-                        <input type="text" id="nameTB" />
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        Description :
-                    </td>
-                    <td>
-                        <input type="text" id="descriptionTB" />
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                <input type="button" onclick="getPath()" value="Show Path List" />
-                    </td>
-                 </tr>
-
-                </table>
+           
 </div>
 
 
