@@ -82,6 +82,18 @@
 
             });
         });
+        $(document).on('pagecreate', '#desktop', function (e, data) {
+            // handle the stop click
+            $("#stopBTN").click(function () {
+                clearInterval(h); // stop running getMyPosition
+                cFlag = false;
+                clearInterval(ht)
+                navFlag = "off";  // set the navigaion flag to off
+                changePage("startDialog");// redirect the user to the landing page
+
+
+            });
+        });
 
         //-----------------------------------------------------------
         // this is called on the pageshow event of the map-page page
@@ -90,7 +102,7 @@
             sTimeInterval = 1000;
         $(document).on('pageshow', '#map-page', function (e, data) {
             image = "images/man_small.png";
-            timer = 300;
+            timer = 30;
             timeInterval = 5000; // [in miliseconds]between the calls to the new position calculations            //minDistance = 5;
             minDistance = 5; // distance from the treasure in which it is found
             cFlag = false;
@@ -99,6 +111,7 @@
             lng = null;
             var mapOptions = { // set the map options
                 zoom: 17
+               
             }
 
             map = new google.maps.Map( document.getElementById('map-canvas'), mapOptions); // create the map object
@@ -348,13 +361,16 @@
 
         //////////////////////////////////////////////////////////////////
         $(document).on('pageshow', '#desktop', function (e, data) {
-            var mapOptions = {
+
+
+            var mapOptions = { // set the map options
                 zoom: 17,
                 mapTypeId: google.maps.MapTypeId.SATELLITE
             }
-            map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 
-            groupName = document.getElementById("groupNameTB").value;
+            map = new google.maps.Map(document.getElementById('map-canvass'), mapOptions); // create the map object
+           
+            groupName = $("#groupNameTB").val(); //document.getElementById("groupNameTB").value;
             if (groupName == "") {
                 alert("Please enter a group name");
                 return;
@@ -405,7 +421,7 @@
                 strokeOpacity: 1.0,
                 strokeWeight: 2
             });
-
+            
             walkPath.setMap(map); // show the walk path on the map
 
         }
@@ -462,12 +478,26 @@
         </div>
 
     <div data-role="page" id="desktop">
-        <div data-role="header" data-theme="b" data-position="fixed">
+        <div data-role="header" data-position="fixed" data-theme="e">
+            <img src="images/no-gps.png" class="ui-btn-left" id="gpsIcon" />
+            <h1>
+                Treasure Game - Ruppin
+            </h1>
+           
+        </div>
+
+        <div data-role="content" id="content">
+            <div id="map-canvass">
+            </div>
+        </div>
+
+        <div data-role="footer" data-position="fixed" data-theme="e" style="text-align:center">
+            <a id="stopBTN" href="#startDialog" data-role="button">stop navigation</a>
+        </div>
            
 </div>
 
 
-    </div>
 
 </body>
 </html>

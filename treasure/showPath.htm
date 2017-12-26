@@ -34,6 +34,7 @@
                 mapTypeId: google.maps.MapTypeId.SATELLITE
             }
             map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+            navigator.geolocation.getCurrentPosition(getCurrentPosition_Success, getCurrentPosition_Failure, options);
 
             var marker1 = new google.maps.Marker({
                 position: myLatlng,
@@ -98,41 +99,41 @@
             });
 
             walkPath.setMap(map); // show the walk path on the map
-            getTarget(request,getTarget_Success,getTarget_Failure); // show the target
+         //   getTarget(request,getTarget_Success,getTarget_Failure); // show the target
         }
 
         //-----------------------------------------------------------------------
         // called on getTarget success
         //-----------------------------------------------------------------------
-        function getTarget_Success(data) {
-            targetPoint = $.parseJSON(data.d);
-            if (targetPoint != "")
-                showTarget(targetPoint);
-            else {
-                alert("no target point");
-            }
-        }
+        //function getTarget_Success(data) {
+        //    targetPoint = $.parseJSON(data.d);
+        //    if (targetPoint != "")
+        //        showTarget(targetPoint);
+        //    else {
+        //        alert("no target point");
+        //    }
+        //}
 
-        //-----------------------------------------------------------------------
-        // called on getTarget failure
-        //-----------------------------------------------------------------------
-        function getTarget_Failure(data) {
-            alert("failed in getTarget :( " + e.responseText);
-        }
+        ////-----------------------------------------------------------------------
+        //// called on getTarget failure
+        ////-----------------------------------------------------------------------
+        //function getTarget_Failure(data) {
+        //    alert("failed in getTarget :( " + e.responseText);
+        //}
 
-        //-----------------------------------------------------------------------
-        // Show the target point
-        //-----------------------------------------------------------------------
-        function showTarget(targetPoint) {
-            var targetLatlng = new google.maps.LatLng(targetPoint.Lat, targetPoint.Lng);
-            image = "images/blue-dot.png";
-            var marker = new google.maps.Marker({
-                position: targetLatlng,
-                map: map,
-                title: 'Target ' + groupName + " 9/11 ",
-                icon: image
-            });
-        }
+        ////-----------------------------------------------------------------------
+        //// Show the target point
+        ////-----------------------------------------------------------------------
+        //function showTarget(targetPoint) {
+        //    var targetLatlng = new google.maps.LatLng(targetPoint.Lat, targetPoint.Lng);
+        //    image = "images/blue-dot.png";
+        //    var marker = new google.maps.Marker({
+        //        position: targetLatlng,
+        //        map: map,
+        //        title: 'Target ' + groupName + " 9/11 ",
+        //        icon: image
+        //    });
+        //}
 
     </script>
   </head>
